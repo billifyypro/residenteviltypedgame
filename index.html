@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Night Jungle - Touch Fixed</title>
+    <title>Night Jungle - Fullscreen Mobile</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
         canvas { display: block; }
@@ -28,13 +28,14 @@
             border: 1px solid rgba(255,255,255,0.2);
             font-size: 14px;
             max-width: 300px;
+            pointer-events: auto; /* Allow clicking this to trigger fullscreen too */
         }
 
         /* Mobile Controls UI */
         .controls-zone {
             position: absolute;
             bottom: 40px;
-            width: 140px; /* Thoda bada area taki thumb miss na ho */
+            width: 140px;
             height: 140px;
             pointer-events: auto;
             touch-action: none;
@@ -57,22 +58,18 @@
             background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            pointer-events: none; /* Knob movement script se hogi */
+            pointer-events: none;
         }
 
-        /* Right Look Zone - Poori right side cover karega */
+        /* Right Look Zone */
         #look-zone { 
             position: absolute;
             right: 0; bottom: 0;
-            width: 50%;  /* Screen ka aadha hissa */
-            height: 80%; /* Neeche ka 80% hissa */
-            background: rgba(255, 0, 0, 0.0); /* Invisible */
+            width: 50%;
+            height: 80%;
+            background: rgba(255, 0, 0, 0.0);
             pointer-events: auto;
             touch-action: none;
-        }
-
-        .mobile-hint {
-            font-size: 0.8em; color: yellow; margin-top: 5px;
         }
     </style>
 </head>
@@ -81,8 +78,6 @@
     <div id="ui-layer">
         <div id="instructions">
             <h3>Jungle Drive</h3>
-            <p>PC: <b>WASD</b> to Move, <b>Mouse</b> to Look</p>
-            <p class="mobile-hint">Fixed: Multitouch Supported</p>
         </div>
 
         <div id="stick-container" class="controls-zone">
@@ -95,6 +90,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <script>
+        // --- NEW: FULLSCREEN LOGIC ---
+        function goFullscreen() {
+            const docEl = document.documentElement;
+            const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+            if (requestFS) {
+                requestFS.call(docEl).catch(err => console.log("Fullscreen blocked or canceled"));
+            }
+        }
+
+        // Mobile: First touch triggers fullscreen
+        document.body.addEventListener('touchstart', function onFirstTouch() {
+             goFullscreen();
+             // Remove listener so it doesn't fire constantly
+             document.body.removeEventListener('touchstart', onFirstTouch);
+        }, { once: true });
+
         // --- 1. SETUP ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x111122); 
@@ -148,7 +159,7 @@
         const moonLight = new THREE.DirectionalLight(0xaaccff, 0.6);
         moonLight.position.set(50, 100, 50);
         moonLight.castShadow = true;
-        moonLight.shadow.mapSize.width = 512; // Lower res shadow for mobile
+        moonLight.shadow.mapSize.width = 512;
         moonLight.shadow.mapSize.height = 512;
         scene.add(moonLight);
 
@@ -170,7 +181,7 @@
         scene.add(road);
 
         // --- TREES (Instanced) ---
-        const treeCount = 400; // Adjusted count
+        const treeCount = 400; 
         const treePositions = []; 
         const trunkGeo = new THREE.CylinderGeometry(0.8, 1.2, 4, 5); 
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3c31 });
@@ -201,7 +212,7 @@
         scene.add(trunkMesh);
         scene.add(leavesMesh);
 
-        // --- 4. CONTROLS (THE FIX) ---
+        // --- 4. CONTROLS ---
         
         const inputs = { fwd: 0, right: 0 };
         const velocity = new THREE.Vector3();
@@ -217,7 +228,11 @@
             if(e.code === 'KeyW' || e.code === 'KeyS') inputs.fwd = 0;
             if(e.code === 'KeyA' || e.code === 'KeyD') inputs.right = 0;
         });
-        document.addEventListener('click', () => document.body.requestPointerLock());
+        // Also trigger fullscreen on PC click along with pointer lock
+        document.addEventListener('click', () => {
+             document.body.requestPointerLock();
+             goFullscreen();
+        });
         document.addEventListener('mousemove', (e) => {
             if (document.pointerLockElement === document.body) {
                 camera.rotation.y -= e.movementX * 0.002;
@@ -232,7 +247,6 @@
         const stickKnob = document.getElementById('joystick-knob');
         const lookZone = document.getElementById('look-zone');
 
-        // Variables to track specific fingers
         let joystickTouchId = null;
         let lookTouchId = null;
         let lastLookX = 0;
@@ -241,10 +255,9 @@
         // --- JOYSTICK LOGIC ---
         stickContainer.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            // Agar pehle se koi finger joystick par nahi hai
             if (joystickTouchId === null) {
                 const touch = e.changedTouches[0];
-                joystickTouchId = touch.identifier; // Finger ID note kar li
+                joystickTouchId = touch.identifier;
                 updateJoystick(touch);
             }
         }, {passive: false});
@@ -252,7 +265,6 @@
         stickContainer.addEventListener('touchmove', (e) => {
             e.preventDefault();
             if (joystickTouchId !== null) {
-                // Sirf wahi finger dhoondo jo joystick wali hai
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === joystickTouchId) {
                         updateJoystick(e.changedTouches[i]);
@@ -293,7 +305,6 @@
 
             stickKnob.style.transform = `translate(calc(-50% + ${joyX}px), calc(-50% + ${joyY}px))`;
 
-            // Normalize values -1 to 1
             inputs.right = joyX / maxDist;
             inputs.fwd = -(joyY / maxDist);
         }
@@ -303,7 +314,7 @@
             e.preventDefault();
             if (lookTouchId === null) {
                 const touch = e.changedTouches[0];
-                lookTouchId = touch.identifier; // Camera ID note kar li
+                lookTouchId = touch.identifier;
                 lastLookX = touch.clientX;
                 lastLookY = touch.clientY;
             }
@@ -312,14 +323,13 @@
         lookZone.addEventListener('touchmove', (e) => {
             e.preventDefault();
             if (lookTouchId !== null) {
-                // Find the specific look finger
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     const touch = e.changedTouches[i];
                     if (touch.identifier === lookTouchId) {
                         const dx = touch.clientX - lastLookX;
                         const dy = touch.clientY - lastLookY;
 
-                        camera.rotation.y -= dx * 0.005; // Sensitivity
+                        camera.rotation.y -= dx * 0.005;
                         camera.rotation.x -= dy * 0.005;
                         camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
 
@@ -376,7 +386,6 @@
             const delta = Math.min((time - prevTime) / 1000, 0.1);
             prevTime = time;
 
-            // Friction
             velocity.x -= velocity.x * 5.0 * delta;
             velocity.z -= velocity.z * 5.0 * delta;
 
@@ -388,9 +397,8 @@
                 const right = new THREE.Vector3();
                 right.crossVectors(camera.up, direction).normalize();
 
-                const speed = 60.0 * delta; // Speed settings
+                const speed = 60.0 * delta;
                 
-                // Move logic corrected
                 velocity.x += (direction.x * inputs.fwd - right.x * inputs.right) * speed;
                 velocity.z += (direction.z * inputs.fwd - right.z * inputs.right) * speed;
             }
