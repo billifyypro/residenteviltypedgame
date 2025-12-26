@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Night Jungle - Mobile Optimized</title>
+    <title>Night Jungle - Touch Fixed</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; touch-action: none; }
+        body { margin: 0; overflow: hidden; background-color: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
         canvas { display: block; }
         
         #ui-layer {
@@ -33,35 +33,42 @@
         /* Mobile Controls UI */
         .controls-zone {
             position: absolute;
-            bottom: 50px;
-            width: 120px;
-            height: 120px;
+            bottom: 40px;
+            width: 140px; /* Thoda bada area taki thumb miss na ho */
+            height: 140px;
+            pointer-events: auto;
+            touch-action: none;
+            z-index: 10;
+        }
+        
+        /* Left Joystick Zone */
+        #stick-container { 
+            left: 20px; 
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            pointer-events: auto; /* Allow touch */
-            touch-action: none;
-        }
-        
-        #stick-container { left: 30px; }
-        #look-zone { 
-            right: 30px; 
-            border: none; 
-            background: rgba(255,0,0,0.0); /* Invisible but clickable */
-            width: 40%; 
-            height: 50%;
-            bottom: 0;
-            right: 0;
-            border-radius: 0;
         }
 
+        /* Joystick Knob */
         #joystick-knob {
             position: absolute;
             top: 50%; left: 50%;
-            width: 40px; height: 40px;
+            width: 50px; height: 50px;
             background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             transform: translate(-50%, -50%);
+            pointer-events: none; /* Knob movement script se hogi */
+        }
+
+        /* Right Look Zone - Poori right side cover karega */
+        #look-zone { 
+            position: absolute;
+            right: 0; bottom: 0;
+            width: 50%;  /* Screen ka aadha hissa */
+            height: 80%; /* Neeche ka 80% hissa */
+            background: rgba(255, 0, 0, 0.0); /* Invisible */
+            pointer-events: auto;
+            touch-action: none;
         }
 
         .mobile-hint {
@@ -75,34 +82,34 @@
         <div id="instructions">
             <h3>Jungle Drive</h3>
             <p>PC: <b>WASD</b> to Move, <b>Mouse</b> to Look</p>
-            <p class="mobile-hint">Mobile: Left Stick Move | Right Side Look</p>
+            <p class="mobile-hint">Fixed: Multitouch Supported</p>
         </div>
 
         <div id="stick-container" class="controls-zone">
             <div id="joystick-knob"></div>
         </div>
-        <div id="look-zone" class="controls-zone"></div>
+
+        <div id="look-zone"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <script>
-        // --- 1. SETUP & OPTIMIZATION ---
+        // --- 1. SETUP ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x111122); 
-        scene.fog = new THREE.FogExp2(0x111122, 0.015); // Fog slightly closer for performance
+        scene.fog = new THREE.FogExp2(0x111122, 0.015);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500); // Reduced far plane
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
         
-        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" }); // Antialias off for mobile speed
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        // Important: Limit pixel ratio for mobile lag fix
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); 
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // --- 2. TEXTURES (Reduced Size) ---
+        // --- 2. ASSETS ---
         function createNoiseTexture(width, height, colorHex) {
             const canvas = document.createElement('canvas');
             canvas.width = width;
@@ -110,13 +117,17 @@
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = colorHex;
             ctx.fillRect(0, 0, width, height);
+            
+            // Fast Noise
             const imgData = ctx.getImageData(0, 0, width, height);
             const data = imgData.data;
             for (let i = 0; i < data.length; i += 4) {
-                const grain = (Math.random() - 0.5) * 30; 
-                data[i] = Math.min(255, Math.max(0, data[i] + grain));
-                data[i+1] = Math.min(255, Math.max(0, data[i+1] + grain));
-                data[i+2] = Math.min(255, Math.max(0, data[i+2] + grain));
+                if(Math.random() > 0.5) {
+                    const grain = (Math.random() - 0.5) * 20; 
+                    data[i] = Math.max(0, data[i] + grain);
+                    data[i+1] = Math.max(0, data[i+1] + grain);
+                    data[i+2] = Math.max(0, data[i+2] + grain);
+                }
             }
             ctx.putImageData(imgData, 0, 0);
             const texture = new THREE.CanvasTexture(canvas);
@@ -125,32 +136,24 @@
             return texture;
         }
 
-        const grassTexture = createNoiseTexture(256, 256, '#1a331a'); // Smaller texture
+        const grassTexture = createNoiseTexture(256, 256, '#1a331a');
         grassTexture.repeat.set(50, 50); 
         const roadTexture = createNoiseTexture(256, 256, '#333333');
         roadTexture.repeat.set(1, 40);
 
-        // --- 3. LIGHTING ---
+        // --- 3. SCENE OBJECTS ---
         const ambientLight = new THREE.AmbientLight(0x404050, 0.7); 
         scene.add(ambientLight);
 
         const moonLight = new THREE.DirectionalLight(0xaaccff, 0.6);
         moonLight.position.set(50, 100, 50);
         moonLight.castShadow = true;
-        // Optimize Shadow Map
-        moonLight.shadow.mapSize.width = 1024;
-        moonLight.shadow.mapSize.height = 1024;
-        moonLight.shadow.camera.near = 0.5;
-        moonLight.shadow.camera.far = 200;
-        moonLight.shadow.camera.left = -100;
-        moonLight.shadow.camera.right = 100;
-        moonLight.shadow.camera.top = 100;
-        moonLight.shadow.camera.bottom = -100;
+        moonLight.shadow.mapSize.width = 512; // Lower res shadow for mobile
+        moonLight.shadow.mapSize.height = 512;
         scene.add(moonLight);
 
-        // --- 4. GROUND & ROAD ---
         const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(1000, 1000), // Reduced size
+            new THREE.PlaneGeometry(1000, 1000),
             new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 0.9 })
         );
         ground.rotation.x = -Math.PI / 2;
@@ -166,60 +169,44 @@
         road.receiveShadow = true;
         scene.add(road);
 
-        // --- 5. OPTIMIZED TREES (InstancedMesh) ---
-        const treeCount = 500;
-        const treePositions = []; // Logic data
-        
-        // Geometry shared by all trees
-        const trunkGeo = new THREE.CylinderGeometry(0.8, 1.2, 4, 6); // 6 segments only (Low Poly)
+        // --- TREES (Instanced) ---
+        const treeCount = 400; // Adjusted count
+        const treePositions = []; 
+        const trunkGeo = new THREE.CylinderGeometry(0.8, 1.2, 4, 5); 
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3c31 });
-        const leavesGeo = new THREE.ConeGeometry(3, 8, 6); // 6 segments only
+        const leavesGeo = new THREE.ConeGeometry(3, 8, 5);
         const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0f3d0f });
 
-        // Instanced Meshes
         const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
         const leavesMesh = new THREE.InstancedMesh(leavesGeo, leavesMat, treeCount);
-        
-        trunkMesh.castShadow = true;
-        trunkMesh.receiveShadow = true;
-        leavesMesh.castShadow = true;
-        leavesMesh.receiveShadow = true;
+        trunkMesh.castShadow = true; trunkMesh.receiveShadow = true;
+        leavesMesh.castShadow = true; leavesMesh.receiveShadow = true;
 
         const dummy = new THREE.Object3D();
-
         for (let i = 0; i < treeCount; i++) {
             let x = (Math.random() - 0.5) * 500;
             let z = (Math.random() - 0.5) * 500;
+            if (x > -12 && x < 12) { x += 25; } 
 
-            if (x > -10 && x < 10) { x += 20; } // Keep road clear
-
-            // 1. Set Trunk Position
             dummy.position.set(x, 2, z);
-            dummy.scale.set(1, 1, 1);
-            dummy.rotation.set(0, 0, 0);
             dummy.updateMatrix();
             trunkMesh.setMatrixAt(i, dummy.matrix);
 
-            // 2. Set Leaves Position
             dummy.position.set(x, 6, z);
             dummy.updateMatrix();
             leavesMesh.setMatrixAt(i, dummy.matrix);
 
-            // 3. Store for collision
             treePositions.push({ x: x, z: z });
         }
-
         scene.add(trunkMesh);
         scene.add(leavesMesh);
 
-        // --- 6. CONTROLS LOGIC (PC + Mobile) ---
+        // --- 4. CONTROLS (THE FIX) ---
         
-        // State
-        const inputs = { fwd: 0, right: 0, yaw: 0, pitch: 0 };
+        const inputs = { fwd: 0, right: 0 };
         const velocity = new THREE.Vector3();
-        let isPCLocked = false;
-
-        // PC Events
+        
+        // --- PC CONTROLS ---
         document.addEventListener('keydown', (e) => {
             if(e.code === 'KeyW') inputs.fwd = 1;
             if(e.code === 'KeyS') inputs.fwd = -1;
@@ -230,126 +217,152 @@
             if(e.code === 'KeyW' || e.code === 'KeyS') inputs.fwd = 0;
             if(e.code === 'KeyA' || e.code === 'KeyD') inputs.right = 0;
         });
-        
-        // Mouse Look (PC)
-        document.addEventListener('click', () => {
-             document.body.requestPointerLock();
-        });
-        document.addEventListener('pointerlockchange', () => {
-            isPCLocked = document.pointerLockElement === document.body;
-        });
+        document.addEventListener('click', () => document.body.requestPointerLock());
         document.addEventListener('mousemove', (e) => {
-            if (isPCLocked) {
+            if (document.pointerLockElement === document.body) {
                 camera.rotation.y -= e.movementX * 0.002;
                 camera.rotation.x -= e.movementY * 0.002;
-                camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+                camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
             }
         });
 
-        // --- MOBILE TOUCH CONTROLS ---
+        // --- MOBILE CONTROLS (FIXED MULTITOUCH) ---
+        
         const stickContainer = document.getElementById('stick-container');
         const stickKnob = document.getElementById('joystick-knob');
         const lookZone = document.getElementById('look-zone');
-        
-        let touchStartPos = { x: 0, y: 0 };
-        let stickActive = false;
-        let lookActive = false;
+
+        // Variables to track specific fingers
+        let joystickTouchId = null;
+        let lookTouchId = null;
         let lastLookX = 0;
         let lastLookY = 0;
 
-        // Joystick Logic
+        // --- JOYSTICK LOGIC ---
         stickContainer.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            stickActive = true;
-            const touch = e.changedTouches[0];
-            touchStartPos = { x: touch.clientX, y: touch.clientY };
+            // Agar pehle se koi finger joystick par nahi hai
+            if (joystickTouchId === null) {
+                const touch = e.changedTouches[0];
+                joystickTouchId = touch.identifier; // Finger ID note kar li
+                updateJoystick(touch);
+            }
         }, {passive: false});
 
         stickContainer.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            if(!stickActive) return;
-            const touch = e.changedTouches[0];
+            if (joystickTouchId !== null) {
+                // Sirf wahi finger dhoondo jo joystick wali hai
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === joystickTouchId) {
+                        updateJoystick(e.changedTouches[i]);
+                        break;
+                    }
+                }
+            }
+        }, {passive: false});
+
+        const endJoystick = (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === joystickTouchId) {
+                    joystickTouchId = null;
+                    inputs.fwd = 0;
+                    inputs.right = 0;
+                    stickKnob.style.transform = `translate(-50%, -50%)`;
+                    break;
+                }
+            }
+        };
+        stickContainer.addEventListener('touchend', endJoystick);
+        stickContainer.addEventListener('touchcancel', endJoystick);
+
+        function updateJoystick(touch) {
+            const rect = stickContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const dx = touch.clientX - centerX;
+            const dy = touch.clientY - centerY;
             
-            const dx = touch.clientX - touchStartPos.x;
-            const dy = touch.clientY - touchStartPos.y;
-            
-            // Limit stick movement visual
             const maxDist = 40;
-            const distance = Math.min(Math.sqrt(dx*dx + dy*dy), maxDist);
+            const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDist);
             const angle = Math.atan2(dy, dx);
             
-            const joyX = Math.cos(angle) * distance;
-            const joyY = Math.sin(angle) * distance;
+            const joyX = Math.cos(angle) * dist;
+            const joyY = Math.sin(angle) * dist;
 
             stickKnob.style.transform = `translate(calc(-50% + ${joyX}px), calc(-50% + ${joyY}px))`;
 
-            // Map to inputs (-1 to 1)
+            // Normalize values -1 to 1
             inputs.right = joyX / maxDist;
-            inputs.fwd = -(joyY / maxDist); // Up is negative Y in screen pixels
+            inputs.fwd = -(joyY / maxDist);
+        }
 
-        }, {passive: false});
-
-        const resetJoystick = () => {
-            stickActive = false;
-            inputs.fwd = 0;
-            inputs.right = 0;
-            stickKnob.style.transform = `translate(-50%, -50%)`;
-        };
-        stickContainer.addEventListener('touchend', resetJoystick);
-        stickContainer.addEventListener('touchcancel', resetJoystick);
-
-        // Look Logic (Right side of screen)
+        // --- LOOK LOGIC ---
         lookZone.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            const touch = e.changedTouches[0];
-            lastLookX = touch.clientX;
-            lastLookY = touch.clientY;
+            if (lookTouchId === null) {
+                const touch = e.changedTouches[0];
+                lookTouchId = touch.identifier; // Camera ID note kar li
+                lastLookX = touch.clientX;
+                lastLookY = touch.clientY;
+            }
         }, {passive: false});
 
         lookZone.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            const touch = e.changedTouches[0];
-            const dx = touch.clientX - lastLookX;
-            const dy = touch.clientY - lastLookY;
+            if (lookTouchId !== null) {
+                // Find the specific look finger
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === lookTouchId) {
+                        const dx = touch.clientX - lastLookX;
+                        const dy = touch.clientY - lastLookY;
 
-            camera.rotation.y -= dx * 0.005;
-            camera.rotation.x -= dy * 0.005;
-            camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
+                        camera.rotation.y -= dx * 0.005; // Sensitivity
+                        camera.rotation.x -= dy * 0.005;
+                        camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
 
-            lastLookX = touch.clientX;
-            lastLookY = touch.clientY;
+                        lastLookX = touch.clientX;
+                        lastLookY = touch.clientY;
+                        break;
+                    }
+                }
+            }
         }, {passive: false});
 
+        const endLook = (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === lookTouchId) {
+                    lookTouchId = null;
+                    break;
+                }
+            }
+        };
+        lookZone.addEventListener('touchend', endLook);
+        lookZone.addEventListener('touchcancel', endLook);
 
-        // --- 7. COLLISION & MOVEMENT LOOP ---
+
+        // --- 5. GAME LOOP ---
         camera.position.set(0, 2, 20);
-        camera.rotation.order = "YXZ"; // Avoid gimbal lock issues
+        camera.rotation.order = "YXZ";
 
         function checkCollisions() {
-            const playerRadius = 1.0;
-            const treeRadius = 1.0; 
-            const collisionDist = playerRadius + treeRadius;
-
+            const collisionDist = 2.0; 
             const pX = camera.position.x;
             const pZ = camera.position.z;
 
             for (let i = 0; i < treePositions.length; i++) {
                 const tX = treePositions[i].x;
                 const tZ = treePositions[i].z;
-                const dx = pX - tX;
-                const dz = pZ - tZ;
                 
-                // Quick Box Check before heavy Math.sqrt
-                if (Math.abs(dx) > collisionDist || Math.abs(dz) > collisionDist) continue;
+                if (Math.abs(pX - tX) > 3 || Math.abs(pZ - tZ) > 3) continue;
 
-                const distance = Math.sqrt(dx*dx + dz*dz);
-
-                if (distance < collisionDist) {
-                    const angle = Math.atan2(dz, dx);
+                const distSq = (pX - tX)**2 + (pZ - tZ)**2;
+                if (distSq < collisionDist * collisionDist) {
+                    const angle = Math.atan2(pZ - tZ, pX - tX);
                     camera.position.x = tX + Math.cos(angle) * collisionDist;
                     camera.position.z = tZ + Math.sin(angle) * collisionDist;
-                    velocity.x = 0;
-                    velocity.z = 0;
                 }
             }
         }
@@ -360,35 +373,26 @@
             requestAnimationFrame(animate);
 
             const time = performance.now();
-            const delta = Math.min((time - prevTime) / 1000, 0.1); // Cap delta to prevent lag spikes teleporting user
+            const delta = Math.min((time - prevTime) / 1000, 0.1);
             prevTime = time;
 
             // Friction
             velocity.x -= velocity.x * 5.0 * delta;
             velocity.z -= velocity.z * 5.0 * delta;
 
-            // Movement Calculation based on Camera Direction
             if (inputs.fwd !== 0 || inputs.right !== 0) {
-                // Get forward vector
                 const direction = new THREE.Vector3();
                 camera.getWorldDirection(direction);
-                direction.y = 0;
-                direction.normalize();
+                direction.y = 0; direction.normalize();
 
-                // Get right vector
                 const right = new THREE.Vector3();
-                right.crossVectors(camera.up, direction).normalize(); // Cross product up * fwd = right (swapped to fix inversion)
+                right.crossVectors(camera.up, direction).normalize();
 
-                // Apply velocity
-                const speed = 80.0 * delta;
+                const speed = 60.0 * delta; // Speed settings
                 
-                // Forward/Back
-                velocity.x += direction.x * inputs.fwd * speed;
-                velocity.z += direction.z * inputs.fwd * speed;
-
-                // Left/Right (Strafe) - Inverted logic fix
-                velocity.x -= right.x * inputs.right * speed;
-                velocity.z -= right.z * inputs.right * speed;
+                // Move logic corrected
+                velocity.x += (direction.x * inputs.fwd - right.x * inputs.right) * speed;
+                velocity.z += (direction.z * inputs.fwd - right.z * inputs.right) * speed;
             }
 
             camera.position.x += velocity.x * delta;
