@@ -2,422 +2,821 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Night Jungle - Fullscreen Mobile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bizora Cloud - Ultimate SaaS Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
-        canvas { display: block; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        #ui-layer {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        #instructions {
-            color: white;
-            font-family: 'Arial', sans-serif;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            margin: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-            font-size: 14px;
-            max-width: 300px;
-            pointer-events: auto; /* Allow clicking this to trigger fullscreen too */
-        }
-
-        /* Mobile Controls UI */
-        .controls-zone {
-            position: absolute;
-            bottom: 40px;
-            width: 140px;
-            height: 140px;
-            pointer-events: auto;
-            touch-action: none;
-            z-index: 10;
+        .price-strikethrough {
+            position: relative;
+            text-decoration: line-through;
+            color: #94a3b8;
         }
         
-        /* Left Joystick Zone */
-        #stick-container { 
-            left: 20px; 
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+        .pulse-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
             border-radius: 50%;
+            animation: pulse 2s infinite;
         }
-
-        /* Joystick Knob */
-        #joystick-knob {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 50px; height: 50px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
-
-        /* Right Look Zone */
-        #look-zone { 
-            position: absolute;
-            right: 0; bottom: 0;
-            width: 50%;
-            height: 80%;
-            background: rgba(255, 0, 0, 0.0);
-            pointer-events: auto;
-            touch-action: none;
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body>
+<body class="bg-[#0f172a] text-slate-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-    <div id="ui-layer">
-        <div id="instructions">
-            <h3>Jungle Drive</h3>
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 space-y-3 pointer-events-none"></div>
+
+    <aside class="w-full md:w-64 bg-[#1e293b] border-b md:border-b-0 md:border-r border-slate-700 p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="flex items-center gap-3 mb-8">
+                <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-cloud-bolt text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl text-white tracking-wide">Bizora Cloud</h1>
+                    <span class="text-xs text-indigo-400 font-medium tracking-wider uppercase">SaaS Hub</span>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="#" onclick="showDashboard()" class="flex items-center gap-3 px-4 py-3 bg-indigo-600/10 text-indigo-400 font-medium rounded-xl transition-all">
+                    <i class="fa-solid fa-house-chimney w-5"></i> Dashboard
+                </a>
+                
+                <button onclick="showHistory()" class="w-full flex items-center justify-between px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white font-medium rounded-xl transition-all group">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-clock-rotate-left w-5 group-hover:text-indigo-400"></i> History
+                    </div>
+                    <span class="text-[10px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full font-bold group-hover:bg-indigo-600 group-hover:text-white transition-colors">LIVE</span>
+                </button>
+
+                <button onclick="showSoftware()" class="w-full flex items-center justify-between px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white font-medium rounded-xl transition-all group">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-layer-group w-5 group-hover:text-indigo-400"></i> Software
+                    </div>
+                    <span class="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold">NEW</span>
+                </button>
+            </nav>
         </div>
 
-        <div id="stick-container" class="controls-zone">
-            <div id="joystick-knob"></div>
-        </div>
+        <div id="sidebarUserProfile" class="hidden md:flex items-center gap-3 pt-6 border-t border-slate-700 mt-6">
+            </div>
+    </aside>
 
-        <div id="look-zone"></div>
+    <main class="flex-1 p-4 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
+        
+        <section id="dashboardSection" class="mb-12">
+            <section class="mb-12 bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-6 md:p-10 rounded-3xl border border-slate-800 relative overflow-hidden shadow-xl">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-600/10 rounded-full blur-3xl"></div>
+                <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl"></div>
+
+                <div class="max-w-3xl relative z-10">
+                    <span class="bg-indigo-500/10 text-indigo-400 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border border-indigo-500/20 inline-block mb-4">
+                        ⚡ 10x Faster Business Ecosystem
+                    </span>
+                    <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
+                        All-In-One SaaS Solutions Jo Aapka <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">Keemti Waqt Bachaye</span>
+                    </h2>
+                    <p class="text-slate-400 text-base md:text-lg mb-6 leading-relaxed">
+                        Welcome to <strong>Bizora Cloud</strong>. Humne aapke business workflows ko automate aur streamline karne ke liye duniya ke sabse advanced cloud tools ko ek hi chatt ke niche laaya hai. No complex setups, no time waste — sirf pure performance aur high-speed delivery.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <div class="flex items-center gap-2 bg-slate-800/80 px-4 py-2 rounded-xl text-xs font-medium border border-slate-700/50">
+                            <i class="fa-solid fa-circle-check text-emerald-400"></i> Zero Lag Architecture
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-800/80 px-4 py-2 rounded-xl text-xs font-medium border border-slate-700/50">
+                            <i class="fa-solid fa-circle-check text-emerald-400"></i> One-Click Deployment
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl md:text-2xl font-bold text-white">Professional SaaS Services</h3>
+                        <p class="text-xs md:text-sm text-slate-400">Explore our enterprise-grade automated tools</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <div class="bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 hover:bg-[#1e293b] transition-all group">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-bolt-lightning"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Instant Cloud Automation</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed">Manual repetitive tasks ko khatam karein. Humare automation scripts aapka rozana ka lagbhag 3 ghante ka waqt bacha sakte hain.</p>
+                    </div>
+
+                    <div class="bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 hover:bg-[#1e293b] transition-all group">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Next-Gen Security Guard</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed">Enterprise-grade encryption aur live threat detection jo aapke enterprise data ko har tarah ke cyber attack se 100% safe rakhta hai.</p>
+                    </div>
+
+                    <div class="bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 hover:bg-[#1e293b] transition-all group">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Smart Analytics Dashboard</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed">Real-time data visualization tool jo aapko actionable insights deta hai taaki aap sahi business decisions bina ksi deri ke le sakein.</p>
+                    </div>
+
+                    <div class="bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 hover:bg-[#1e293b] transition-all group">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Seamless Multi-API Sync</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed">Apne saare favourite tools aur applications ko Bizora Cloud ke sath ek click me connect aur sync karein.</p>
+                    </div>
+
+                    <div class="bg-[#1e293b]/50 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 hover:bg-[#1e293b] transition-all group">
+                        <div class="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-headset"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">24/7 Expert Cloud Support</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed">Aapko jab bhi help chahiye ho, humari technical expert team hamesha ready hai taaki aapka kaam kabhi na ruke.</p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-indigo-900/40 to-slate-900 p-6 rounded-2xl border border-indigo-500/30 flex flex-col justify-between group">
+                        <div>
+                            <h4 class="text-lg font-bold text-white mb-2">Ready to scale your business?</h4>
+                            <p class="text-sm text-indigo-200/70">Custom customisable setup ke liye humare experts se abhi connect karein.</p>
+                        </div>
+                        <button onclick="showSoftware()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition-colors shadow-lg shadow-indigo-600/20">
+                            Get Started Now <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <section id="softwareSection" class="hidden fade-in mb-12">
+            <div class="mb-8">
+                <h3 class="text-3xl font-bold text-white mb-2">Our Premium Software Suite</h3>
+                <p class="text-slate-400">Powerful tools designed to transform your business operations</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-[#1e293b] to-[#0f172a] p-8 rounded-3xl border border-slate-800 hover:border-slate-600 transition-all">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-3xl text-white shadow-lg">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-2xl font-bold text-white">BizoraBilling</h4>
+                                <p class="text-emerald-400 text-sm font-medium">Professional Finance Suite</p>
+                            </div>
+                        </div>
+
+                        <p class="text-slate-400 text-base leading-relaxed mb-6">
+                            Apne business ki complete billing, invoicing, aur payment management ko automate karein. Real-time financial reports, tax calculation, aur multi-currency support sab ek platform par. Chhote startups se lekar bade enterprises tak, sab ke liye perfect solution.
+                        </p>
+
+                        <div class="space-y-3 mb-8">
+                            <div class="flex items-center gap-3 text-slate-300">
+                                <i class="fa-solid fa-check text-emerald-400 text-lg"></i>
+                                <span>Unlimited Invoices & Billing</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-300">
+                                <i class="fa-solid fa-check text-emerald-400 text-lg"></i>
+                                <span>Real-time Payment Tracking</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-300">
+                                <i class="fa-solid fa-check text-emerald-400 text-lg"></i>
+                                <span>Automated Tax Calculation</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-slate-300">
+                                <i class="fa-solid fa-check text-emerald-400 text-lg"></i>
+                                <span>Advanced Financial Reports</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#0f172a] p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
+                        
+                        <div class="mb-6">
+                            <p class="text-slate-400 text-sm mb-2">Limited Time Offer</p>
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="price-strikethrough text-2xl font-bold">₹799/month</span>
+                                <span class="text-4xl font-bold text-emerald-400">FREE</span>
+                            </div>
+                            <p class="text-xs text-slate-500">Lifetime access - Launch offer</p>
+                            <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2 mt-3">
+                                <p class="text-emerald-300 text-xs font-semibold">✓ Zero Setup Fees | Zero Maintenance</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/50 p-4 rounded-xl mb-6 border border-slate-700">
+                            <p class="text-xs text-slate-400 mb-2 font-semibold">WHAT'S INCLUDED:</p>
+                            <div class="space-y-1 text-xs text-slate-300">
+                                <p>• Cloud-based Billing Platform</p>
+                                <p>• Customer Portal Access</p>
+                                <p>• Email Support 24/7</p>
+                                <p>• Data Backup & Security</p>
+                            </div>
+                        </div>
+
+                        <button onclick="handleSoftwareAccess()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 text-base">
+                            Access Now <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="historySection" class="hidden fade-in mb-12">
+            <div class="mb-8">
+                <h3 class="text-3xl font-bold text-white mb-2">Your Software History</h3>
+                <p class="text-slate-400">Track your activated software and manage your subscriptions</p>
+            </div>
+
+            <div id="historyContainer" class="space-y-4">
+                <div class="bg-[#1e293b]/50 border border-slate-800 rounded-2xl p-6 text-center py-12">
+                    <i class="fa-solid fa-inbox text-4xl text-slate-600 mb-4"></i>
+                    <p class="text-slate-400">No software activated yet. Start by accessing BizoraBilling!</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300 overflow-y-auto">
+        <div class="bg-[#1e293b] border border-slate-700/60 rounded-3xl w-full max-w-md p-8 text-left shadow-2xl relative transform scale-95 transition-transform duration-300 my-8" id="authModalBox">
+            
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="inline-flex bg-indigo-600 p-2.5 rounded-xl text-white mb-3 shadow-md shadow-indigo-500/20">
+                    <i class="fa-solid fa-lock text-lg"></i>
+                </div>
+                <h3 id="authTitle" class="text-2xl font-bold text-white">Welcome Back</h3>
+                <p id="authSubtitle" class="text-slate-400 text-sm mt-1">Please enter your details to sign in</p>
+            </div>
+
+            <div class="flex bg-[#0f172a] p-1 rounded-xl mb-6 border border-slate-800">
+                <button id="loginTabBtn" onclick="switchAuthTab('login')" class="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all">Log In</button>
+                <button id="signupTabBtn" onclick="switchAuthTab('signup')" class="flex-1 text-center py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all">Sign Up</button>
+            </div>
+
+            <button onclick="handleFakeGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 px-4 rounded-xl transition-all shadow-lg text-sm border border-slate-200">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.53-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.57-5.17 3.57-8.58z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.11 0-5.74-2.11-6.68-4.96H1.21v3.15C3.18 21.88 7.31 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.32 14.24A7.16 7.16 0 0 1 5 12c0-.79.13-1.57.32-2.34V6.51H1.21A11.94 11.94 0 0 0 0 12c0 1.92.45 3.74 1.21 5.39l4.11-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.18 2.11 1.21 5.65l4.11 3.15c.94-2.85 3.57-4.96 6.68-4.96z"/>
+                </svg>
+                Continue with Google
+            </button>
+
+            <div class="relative flex py-4 items-center">
+                <div class="flex-grow border-t border-slate-700/50"></div>
+                <span class="flex-shrink mx-4 text-xs text-slate-500 font-semibold tracking-wider uppercase">Or email</span>
+                <div class="flex-grow border-t border-slate-700/50"></div>
+            </div>
+
+            <form onsubmit="handleFakeAuthSubmit(event)" class="space-y-4">
+                <div id="usernameField" class="hidden">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Full Name</label>
+                    <input type="text" id="authName" placeholder="John Doe" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none transition-colors text-sm" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Email Address</label>
+                    <input type="email" id="authEmail" required placeholder="admin@example.com" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none transition-colors text-sm" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Password</label>
+                    <input type="password" id="authPassword" required placeholder="••••••••" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none transition-colors text-sm" />
+                </div>
+                <button type="submit" id="authSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/20 text-sm mt-2">
+                    Sign In to Ecosystem
+                </button>
+            </form>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
+    <div id="billingModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300 overflow-y-auto">
+        <div class="bg-[#1e293b] border border-slate-700 rounded-3xl w-full max-w-2xl p-6 text-left shadow-2xl relative transform scale-95 transition-transform duration-300 my-8" id="modalBox">
+            
+            <button onclick="closeBillingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center transition-colors z-10">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="mb-6">
+                <h3 class="text-2xl font-bold text-white mb-2">Activate BizoraBilling</h3>
+                <p class="text-slate-400 text-sm">Complete your profile to get instant access. It takes less than 2 minutes!</p>
+            </div>
+
+            <div id="formContent">
+                <div id="step1" class="mb-6">
+                    <label class="block text-white font-semibold mb-3">Mobile Number <span class="text-red-400">*</span></label>
+                    <div class="flex gap-2">
+                        <input type="tel" id="phoneInput" placeholder="10-digit mobile number" maxlength="10" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-colors" />
+                        <button onclick="validatePhone()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors">
+                            Next <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Enter valid 10-digit mobile number</p>
+                </div>
+
+                <div id="step2" class="hidden mb-6">
+                    <label class="block text-white font-semibold mb-3">Email Address <span class="text-red-400">*</span></label>
+                    <div class="flex gap-2">
+                        <input type="email" id="emailInput" placeholder="your@email.com" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-colors" />
+                        <button onclick="validateEmail()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors">
+                            Next <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Verification link bhejenge is email par</p>
+                </div>
+
+                <div id="step3" class="hidden mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-white font-semibold mb-3">Full Name <span class="text-red-400">*</span></label>
+                            <input type="text" id="nameInput" placeholder="Your full name" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-colors" />
+                        </div>
+                        <div>
+                            <label class="block text-white font-semibold mb-3">Industry <span class="text-red-400">*</span></label>
+                            <select id="industryInput" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-indigo-500 focus:outline-none transition-colors">
+                                <option value="">Select your industry</option>
+                                <option value="IT">Information Technology</option>
+                                <option value="Finance">Finance & Banking</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Retail">Retail & E-commerce</option>
+                                <option value="Manufacturing">Manufacturing</option>
+                                <option value="Education">Education</option>
+                                <option value="Consulting">Consulting</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="submitForm()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20">
+                        Activate Access <i class="fa-solid fa-check ml-2"></i>
+                    </button>
+                </div>
+
+                <div id="step4" class="hidden text-center py-8">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-emerald-500/10 rounded-full flex items-center justify-center text-4xl text-emerald-400 animate-pulse">
+                        <i class="fa-solid fa-gear"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-2">Processing Your Request</h4>
+                    <p class="text-slate-400 mb-4">Aapka BizoraBilling account set up ho raha hai...</p>
+                    <div class="flex justify-center gap-1">
+                        <span class="pulse-dot"></span>
+                        <span class="pulse-dot" style="animation-delay: 0.3s"></span>
+                        <span class="pulse-dot" style="animation-delay: 0.6s"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="progressBar" class="mt-6 flex gap-2">
+                <div id="prog1" class="h-1 flex-1 bg-indigo-600 rounded-full"></div>
+                <div id="prog2" class="h-1 flex-1 bg-slate-700 rounded-full"></div>
+                <div id="prog3" class="h-1 flex-1 bg-slate-700 rounded-full"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- NEW: FULLSCREEN LOGIC ---
-        function goFullscreen() {
-            const docEl = document.documentElement;
-            const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
-            if (requestFS) {
-                requestFS.call(docEl).catch(err => console.log("Fullscreen blocked or canceled"));
-            }
-        }
+        let formData = {};
+        let currentStep = 1;
+        let currentAuthMode = 'login';
 
-        // Mobile: First touch triggers fullscreen
-        document.body.addEventListener('touchstart', function onFirstTouch() {
-             goFullscreen();
-             // Remove listener so it doesn't fire constantly
-             document.body.removeEventListener('touchstart', onFirstTouch);
-        }, { once: true });
-
-        // --- 1. SETUP ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111122); 
-        scene.fog = new THREE.FogExp2(0x111122, 0.015);
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
-        
-        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); 
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        document.body.appendChild(renderer.domElement);
-
-        // --- 2. ASSETS ---
-        function createNoiseTexture(width, height, colorHex) {
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = colorHex;
-            ctx.fillRect(0, 0, width, height);
+        // Custom Sleek Toast System (Replacing standard alert)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 bg-[#1e293b] border p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 max-w-sm pointer-events-auto ${
+                type === 'success' ? 'border-emerald-500/40 text-emerald-400' : type === 'error' ? 'border-rose-500/40 text-rose-400' : 'border-indigo-500/40 text-indigo-400'
+            }`;
             
-            // Fast Noise
-            const imgData = ctx.getImageData(0, 0, width, height);
-            const data = imgData.data;
-            for (let i = 0; i < data.length; i += 4) {
-                if(Math.random() > 0.5) {
-                    const grain = (Math.random() - 0.5) * 20; 
-                    data[i] = Math.max(0, data[i] + grain);
-                    data[i+1] = Math.max(0, data[i+1] + grain);
-                    data[i+2] = Math.max(0, data[i+2] + grain);
-                }
-            }
-            ctx.putImageData(imgData, 0, 0);
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            return texture;
-        }
-
-        const grassTexture = createNoiseTexture(256, 256, '#1a331a');
-        grassTexture.repeat.set(50, 50); 
-        const roadTexture = createNoiseTexture(256, 256, '#333333');
-        roadTexture.repeat.set(1, 40);
-
-        // --- 3. SCENE OBJECTS ---
-        const ambientLight = new THREE.AmbientLight(0x404050, 0.7); 
-        scene.add(ambientLight);
-
-        const moonLight = new THREE.DirectionalLight(0xaaccff, 0.6);
-        moonLight.position.set(50, 100, 50);
-        moonLight.castShadow = true;
-        moonLight.shadow.mapSize.width = 512;
-        moonLight.shadow.mapSize.height = 512;
-        scene.add(moonLight);
-
-        const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(1000, 1000),
-            new THREE.MeshStandardMaterial({ map: grassTexture, roughness: 0.9 })
-        );
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
-        scene.add(ground);
-
-        const road = new THREE.Mesh(
-            new THREE.PlaneGeometry(12, 1000),
-            new THREE.MeshStandardMaterial({ map: roadTexture, roughness: 0.6 })
-        );
-        road.rotation.x = -Math.PI / 2;
-        road.position.y = 0.02;
-        road.receiveShadow = true;
-        scene.add(road);
-
-        // --- TREES (Instanced) ---
-        const treeCount = 400; 
-        const treePositions = []; 
-        const trunkGeo = new THREE.CylinderGeometry(0.8, 1.2, 4, 5); 
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3c31 });
-        const leavesGeo = new THREE.ConeGeometry(3, 8, 5);
-        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0f3d0f });
-
-        const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
-        const leavesMesh = new THREE.InstancedMesh(leavesGeo, leavesMat, treeCount);
-        trunkMesh.castShadow = true; trunkMesh.receiveShadow = true;
-        leavesMesh.castShadow = true; leavesMesh.receiveShadow = true;
-
-        const dummy = new THREE.Object3D();
-        for (let i = 0; i < treeCount; i++) {
-            let x = (Math.random() - 0.5) * 500;
-            let z = (Math.random() - 0.5) * 500;
-            if (x > -12 && x < 12) { x += 25; } 
-
-            dummy.position.set(x, 2, z);
-            dummy.updateMatrix();
-            trunkMesh.setMatrixAt(i, dummy.matrix);
-
-            dummy.position.set(x, 6, z);
-            dummy.updateMatrix();
-            leavesMesh.setMatrixAt(i, dummy.matrix);
-
-            treePositions.push({ x: x, z: z });
-        }
-        scene.add(trunkMesh);
-        scene.add(leavesMesh);
-
-        // --- 4. CONTROLS ---
-        
-        const inputs = { fwd: 0, right: 0 };
-        const velocity = new THREE.Vector3();
-        
-        // --- PC CONTROLS ---
-        document.addEventListener('keydown', (e) => {
-            if(e.code === 'KeyW') inputs.fwd = 1;
-            if(e.code === 'KeyS') inputs.fwd = -1;
-            if(e.code === 'KeyA') inputs.right = -1;
-            if(e.code === 'KeyD') inputs.right = 1;
-        });
-        document.addEventListener('keyup', (e) => {
-            if(e.code === 'KeyW' || e.code === 'KeyS') inputs.fwd = 0;
-            if(e.code === 'KeyA' || e.code === 'KeyD') inputs.right = 0;
-        });
-        // Also trigger fullscreen on PC click along with pointer lock
-        document.addEventListener('click', () => {
-             document.body.requestPointerLock();
-             goFullscreen();
-        });
-        document.addEventListener('mousemove', (e) => {
-            if (document.pointerLockElement === document.body) {
-                camera.rotation.y -= e.movementX * 0.002;
-                camera.rotation.x -= e.movementY * 0.002;
-                camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
-            }
-        });
-
-        // --- MOBILE CONTROLS (FIXED MULTITOUCH) ---
-        
-        const stickContainer = document.getElementById('stick-container');
-        const stickKnob = document.getElementById('joystick-knob');
-        const lookZone = document.getElementById('look-zone');
-
-        let joystickTouchId = null;
-        let lookTouchId = null;
-        let lastLookX = 0;
-        let lastLookY = 0;
-
-        // --- JOYSTICK LOGIC ---
-        stickContainer.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (joystickTouchId === null) {
-                const touch = e.changedTouches[0];
-                joystickTouchId = touch.identifier;
-                updateJoystick(touch);
-            }
-        }, {passive: false});
-
-        stickContainer.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (joystickTouchId !== null) {
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === joystickTouchId) {
-                        updateJoystick(e.changedTouches[i]);
-                        break;
-                    }
-                }
-            }
-        }, {passive: false});
-
-        const endJoystick = (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === joystickTouchId) {
-                    joystickTouchId = null;
-                    inputs.fwd = 0;
-                    inputs.right = 0;
-                    stickKnob.style.transform = `translate(-50%, -50%)`;
-                    break;
-                }
-            }
-        };
-        stickContainer.addEventListener('touchend', endJoystick);
-        stickContainer.addEventListener('touchcancel', endJoystick);
-
-        function updateJoystick(touch) {
-            const rect = stickContainer.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-
-            const dx = touch.clientX - centerX;
-            const dy = touch.clientY - centerY;
+            const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i> <p class="text-sm font-medium text-slate-200">${message}</p>`;
             
-            const maxDist = 40;
-            const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDist);
-            const angle = Math.atan2(dy, dx);
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Auth Logic Integration
+        function checkUserAuth() {
+            return JSON.parse(localStorage.getItem('bizora_session')) || null;
+        }
+
+        function updateSidebarProfile() {
+            const container = document.getElementById('sidebarUserProfile');
+            const user = checkUserAuth();
+
+            if (user) {
+                container.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-indigo-500/20 border border-indigo-500 flex items-center justify-center font-bold text-indigo-400 uppercase">
+                        ${user.name ? user.name.substring(0, 2) : 'US'}
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-sm font-semibold text-white truncate">${user.name || 'Active User'}</p>
+                        <p class="text-xs text-slate-400 truncate">${user.email}</p>
+                    </div>
+                    <button onclick="handleLogout()" class="text-slate-500 hover:text-rose-400 transition-colors p-1" title="Log Out">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500">
+                        <i class="fa-solid fa-user-secret"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-slate-300">Guest Workspace</p>
+                        <p class="text-xs text-slate-500">Not signed in</p>
+                    </div>
+                `;
+            }
+        }
+
+        function openAuthModal() {
+            const modal = document.getElementById('authModal');
+            const modalBox = document.getElementById('authModalBox');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalBox.classList.remove('scale-95');
+                modalBox.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('authModal');
+            const modalBox = document.getElementById('authModalBox');
+            modal.classList.add('opacity-0');
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function switchAuthTab(tab) {
+            currentAuthMode = tab;
+            const loginBtn = document.getElementById('loginTabBtn');
+            const signupBtn = document.getElementById('signupTabBtn');
+            const nameField = document.getElementById('usernameField');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const title = document.getElementById('authTitle');
+            const subtitle = document.getElementById('authSubtitle');
+
+            if (tab === 'login') {
+                loginBtn.className = "flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all";
+                signupBtn.className = "flex-1 text-center py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all";
+                nameField.classList.add('hidden');
+                title.innerText = "Welcome Back";
+                subtitle.innerText = "Please enter your details to sign in";
+                submitBtn.innerText = "Sign In to Ecosystem";
+            } else {
+                signupBtn.className = "flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition-all";
+                loginBtn.className = "flex-1 text-center py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-slate-200 transition-all";
+                nameField.classList.remove('hidden');
+                title.innerText = "Create Account";
+                subtitle.innerText = "Get access to powerful automated tools";
+                submitBtn.innerText = "Register Workspace";
+            }
+        }
+
+        // Mock Login/Signup Submission
+        function handleFakeAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const name = document.getElementById('authName').value || email.split('@')[0];
             
-            const joyX = Math.cos(angle) * dist;
-            const joyY = Math.sin(angle) * dist;
-
-            stickKnob.style.transform = `translate(calc(-50% + ${joyX}px), calc(-50% + ${joyY}px))`;
-
-            inputs.right = joyX / maxDist;
-            inputs.fwd = -(joyY / maxDist);
+            const sessionData = { email, name: name, provider: 'credentials' };
+            localStorage.setItem('bizora_session', JSON.stringify(sessionData));
+            
+            showToast(`Successfully authenticated as ${name}!`, 'success');
+            closeAuthModal();
+            updateSidebarProfile();
+            
+            // Automatically resume target sequence
+            setTimeout(() => handleSoftwareAccess(), 500);
         }
 
-        // --- LOOK LOGIC ---
-        lookZone.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (lookTouchId === null) {
-                const touch = e.changedTouches[0];
-                lookTouchId = touch.identifier;
-                lastLookX = touch.clientX;
-                lastLookY = touch.clientY;
+        // Mock Google OAuth Submission
+        function handleFakeGoogleLogin() {
+            const sessionData = { email: 'google.user@gmail.com', name: 'Google Cloud User', provider: 'google' };
+            localStorage.setItem('bizora_session', JSON.stringify(sessionData));
+            
+            showToast('Authenticated perfectly with Google!', 'success');
+            closeAuthModal();
+            updateSidebarProfile();
+            
+            setTimeout(() => handleSoftwareAccess(), 500);
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('bizora_session');
+            showToast('Logged out securely.', 'info');
+            updateSidebarProfile();
+            showDashboard();
+        }
+
+        // Combined Guard Gate Logic (Auth Check + Single Request Lock)
+        function handleSoftwareAccess() {
+            // Rule 1: Check Auth Status First
+            if (!checkUserAuth()) {
+                showToast("Please authenticate your account before provisioning tools.", "info");
+                openAuthModal();
+                return;
             }
-        }, {passive: false});
 
-        lookZone.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (lookTouchId !== null) {
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    const touch = e.changedTouches[i];
-                    if (touch.identifier === lookTouchId) {
-                        const dx = touch.clientX - lastLookX;
-                        const dy = touch.clientY - lastLookY;
+            // Rule 2: Multi-Request Check Lock Engine
+            let history = JSON.parse(localStorage.getItem('bizoraBillingHistory') || '[]');
+            const hasActiveRequest = history.some(item => item.status === 'processing' || item.status === 'active');
 
-                        camera.rotation.y -= dx * 0.005;
-                        camera.rotation.x -= dy * 0.005;
-                        camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
-
-                        lastLookX = touch.clientX;
-                        lastLookY = touch.clientY;
-                        break;
-                    }
-                }
+            if (hasActiveRequest) {
+                showToast("Access Locked: Aapki ek request pehle se line me hai. Jab tak woh clear nahi hoti, aap dusra software select nahi kar sakte.", "error");
+                showHistory();
+                return;
             }
-        }, {passive: false});
 
-        const endLook = (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === lookTouchId) {
-                    lookTouchId = null;
-                    break;
-                }
-            }
-        };
-        lookZone.addEventListener('touchend', endLook);
-        lookZone.addEventListener('touchcancel', endLook);
+            // Proceed to standard Setup Step Form
+            openBillingModal();
+        }
 
+        // Navigation Functions
+        function showDashboard() {
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('softwareSection').classList.add('hidden');
+            document.getElementById('historySection').classList.add('hidden');
+        }
 
-        // --- 5. GAME LOOP ---
-        camera.position.set(0, 2, 20);
-        camera.rotation.order = "YXZ";
+        function showSoftware() {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('softwareSection').classList.remove('hidden');
+            document.getElementById('historySection').classList.add('hidden');
+        }
 
-        function checkCollisions() {
-            const collisionDist = 2.0; 
-            const pX = camera.position.x;
-            const pZ = camera.position.z;
+        function showHistory() {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('softwareSection').classList.add('hidden');
+            document.getElementById('historySection').classList.remove('hidden');
+            loadHistory();
+        }
 
-            for (let i = 0; i < treePositions.length; i++) {
-                const tX = treePositions[i].x;
-                const tZ = treePositions[i].z;
-                
-                if (Math.abs(pX - tX) > 3 || Math.abs(pZ - tZ) > 3) continue;
+        // Billing Modal Functions
+        function openBillingModal() {
+            const modal = document.getElementById('billingModal');
+            const modalBox = document.getElementById('modalBox');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalBox.classList.remove('scale-95');
+                modalBox.classList.add('scale-100');
+            }, 10);
+            currentStep = 1;
+            showStep(1);
+        }
 
-                const distSq = (pX - tX)**2 + (pZ - tZ)**2;
-                if (distSq < collisionDist * collisionDist) {
-                    const angle = Math.atan2(pZ - tZ, pX - tX);
-                    camera.position.x = tX + Math.cos(angle) * collisionDist;
-                    camera.position.z = tZ + Math.sin(angle) * collisionDist;
+        function closeBillingModal() {
+            const modal = document.getElementById('billingModal');
+            const modalBox = document.getElementById('modalBox');
+            modal.classList.add('opacity-0');
+            modalBox.classList.remove('scale-100');
+            modalBox.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('[id^="step"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('step' + step).classList.remove('hidden');
+            
+            // Update progress bar
+            for (let i = 1; i <= 3; i++) {
+                const prog = document.getElementById('prog' + i);
+                if (i <= step) {
+                    prog.classList.remove('bg-slate-700');
+                    prog.classList.add('bg-indigo-600');
+                } else {
+                    prog.classList.remove('bg-indigo-600');
+                    prog.classList.add('bg-slate-700');
                 }
             }
         }
 
-        let prevTime = performance.now();
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            const time = performance.now();
-            const delta = Math.min((time - prevTime) / 1000, 0.1);
-            prevTime = time;
-
-            velocity.x -= velocity.x * 5.0 * delta;
-            velocity.z -= velocity.z * 5.0 * delta;
-
-            if (inputs.fwd !== 0 || inputs.right !== 0) {
-                const direction = new THREE.Vector3();
-                camera.getWorldDirection(direction);
-                direction.y = 0; direction.normalize();
-
-                const right = new THREE.Vector3();
-                right.crossVectors(camera.up, direction).normalize();
-
-                const speed = 60.0 * delta;
-                
-                velocity.x += (direction.x * inputs.fwd - right.x * inputs.right) * speed;
-                velocity.z += (direction.z * inputs.fwd - right.z * inputs.right) * speed;
+        function validatePhone() {
+            const phone = document.getElementById('phoneInput').value;
+            const phoneRegex = /^[0-9]{10}$/;
+            
+            if (!phoneRegex.test(phone)) {
+                showToast('Please enter a valid 10-digit mobile number', 'error');
+                return;
             }
-
-            camera.position.x += velocity.x * delta;
-            camera.position.z += velocity.z * delta;
-
-            checkCollisions();
-            renderer.render(scene, camera);
+            
+            formData.phone = phone;
+            currentStep = 2;
+            showStep(2);
         }
 
-        animate();
+        function validateEmail() {
+            const email = document.getElementById('emailInput').value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (!emailRegex.test(email)) {
+                showToast('Please enter a valid email address', 'error');
+                return;
+            }
+            
+            formData.email = email;
+            currentStep = 3;
+            showStep(3);
+        }
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        function submitForm() {
+            const name = document.getElementById('nameInput').value;
+            const industry = document.getElementById('industryInput').value;
+            
+            if (!name.trim()) {
+                showToast('Please enter your name', 'error');
+                return;
+            }
+            
+            if (!industry) {
+                showToast('Please select your industry', 'error');
+                return;
+            }
+            
+            formData.name = name;
+            formData.industry = industry;
+            formData.timestamp = new Date().toLocaleString();
+            formData.status = 'processing';
+            
+            // Show processing step
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step4').classList.remove('hidden');
+            
+            // Simulate processing and then add to history
+            setTimeout(() => {
+                // formData.status = 'active'; // Removed this so it stays processing
+                saveToHistory();
+                closeBillingModal();
+                showHistory();
+                resetForm();
+                showToast("Request sent to Admin! Your setup is processing.", "success");
+            }, 3000);
+        }
+
+        function saveToHistory() {
+            let history = JSON.parse(localStorage.getItem('bizoraBillingHistory') || '[]');
+            history.push(formData);
+            localStorage.setItem('bizoraBillingHistory', JSON.stringify(history));
+        }
+
+        function loadHistory() {
+            let history = JSON.parse(localStorage.getItem('bizoraBillingHistory') || '[]');
+            const container = document.getElementById('historyContainer');
+            
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-[#1e293b]/50 border border-slate-800 rounded-2xl p-6 text-center py-12">
+                        <i class="fa-solid fa-inbox text-4xl text-slate-600 mb-4"></i>
+                        <p class="text-slate-400">No software activated yet. Start by accessing BizoraBilling!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = history.map((item, index) => `
+                <div class="bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-800 rounded-2xl p-6 hover:border-slate-700 transition-all">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center text-white text-xl">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-lg font-bold text-white">BizoraBilling</h5>
+                                <p class="text-sm text-slate-400">Activated by ${item.name}</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold ${item.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'}">
+                            ${item.status === 'active' ? '✓ Active' : '⏳ Processing'}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium mb-1">PHONE</p>
+                            <p class="text-sm text-white font-semibold">${item.phone}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium mb-1">EMAIL</p>
+                            <p class="text-sm text-white font-semibold truncate">${item.email}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium mb-1">INDUSTRY</p>
+                            <p class="text-sm text-white font-semibold">${item.industry}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium mb-1">ACTIVATED</p>
+                            <p class="text-sm text-white font-semibold">${new Date(item.timestamp).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    
+                    ${item.status === 'processing' ? `
+                        <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4">
+                            <p class="text-yellow-300 text-sm font-medium">
+                                <i class="fa-solid fa-hourglass-end mr-2"></i>
+                                Your account setup is in progress. It hardly takes up 24 hours to complete full activation. You'll receive a confirmation email once it's ready!
+                            </p>
+                        </div>
+                    ` : `
+                        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 mb-4">
+                            <p class="text-emerald-300 text-sm font-medium">
+                                <i class="fa-solid fa-circle-check mr-2"></i>
+                                Your BizoraBilling account is fully activated and ready to use!
+                            </p>
+                        </div>
+                    `}
+                    
+                    <button onclick="openSoftware(${index})" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors">
+                        Open Software <i class="fa-solid fa-external-link ml-2"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+       function openSoftware(index) {
+            let history = JSON.parse(localStorage.getItem('bizoraBillingHistory') || '[]');
+            const item = history[index];
+            
+            // Agar admin ne link set kiya hai, toh usko open karo
+            if (item.softwareLink && item.softwareLink !== "") {
+                showToast(`Launching dashboard for ${item.name}!`, 'success');
+                // Naye tab me link open karega
+                setTimeout(() => {
+                    window.open(item.softwareLink, '_blank');
+                }, 1000);
+            } else {
+                // Agar link abhi tak set nahi hua hai
+                showToast(`Admin is yet to assign a link for ${item.name}! Please wait.`, 'info');
+            }
+        }
+
+        function resetForm() {
+            formData = {};
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('emailInput').value = '';
+            document.getElementById('nameInput').value = '';
+            document.getElementById('industryInput').value = '';
+            document.getElementById('step4').classList.add('hidden');
+            currentStep = 1;
+            showStep(1);
+        }
+
+        // Close modal on background click
+        window.onclick = function(event) {
+            const billingModal = document.getElementById('billingModal');
+            const authModal = document.getElementById('authModal');
+            if (event.target == billingModal) {
+                closeBillingModal();
+            }
+            if (event.target == authModal) {
+                closeAuthModal();
+            }
+        }
+
+        // Init Sequence on page load
+        window.addEventListener('load', function() {
+            showDashboard();
+            updateSidebarProfile();
         });
-
     </script>
 </body>
 </html>
